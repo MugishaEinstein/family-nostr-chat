@@ -20,3 +20,4 @@
 - [ ] Deliver each Family Space message to the sending device as well as invited recipients, then validate sender-side visibility.
 - [ ] Replace the temporary unauthenticated relay-policy bypass with a secure policy compatible with strfry’s actual request data.
 - [x] Constrain the messenger to the viewport and make only the message history scroll as conversations grow.
+- [x] Authenticate before publishing Family Space messages and retry the first publish after an auth-required relay response.

@@ -151,6 +151,10 @@ export async function signRelayAuth(template: EventTemplate, identity: LocalIden
   return finalizeEvent(template, utils.hexToBytes(identity.secretHex));
 }
 
+export function isAuthRequiredError(error: unknown) {
+  return error instanceof Error && error.message.startsWith("auth-required:");
+}
+
 /** Signs a NIP-98-style request authorization. The private key never leaves this device. */
 export function signNostrHttpAuthorization(url: string, method: string, identity: LocalIdentity) {
   const event = finalizeEvent(

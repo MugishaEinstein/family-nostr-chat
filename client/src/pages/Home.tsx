@@ -15,6 +15,7 @@ import {
   getStoredIdentity,
   getStoredRelay,
   identityFromSecret,
+  isAuthRequiredError,
   isFamilyRoomMessage,
   normalizeRelayUrl,
   publishFamilyMessage,
@@ -231,7 +232,18 @@ export default function Home() {
     if (!identity || !family || !relayRef.current || !draft.trim()) return;
     setIsSending(true);
     try {
-      await publishFamilyMessage(relayRef.current, identity, members.map((member) => member.pubkey), draft, family.id);
+      const recipients = members.map((member) => member.pubkey);
+      try {
+        await publishFamilyMessage(relayRef.current, identity, recipients, draft, family.id);
+      } catch (error) {
+        if (!isAuthRequiredError(error)) throw error;
+        setConnection("connecting");
+        setConnectionNote("Authenticating this device before sending…");
+        await relayRef.current.auth((template) => signRelayAuth(template, identity));
+        setConnection("connected");
+        setConnectionNote("Private family space connected");
+        await publishFamilyMessage(relayRef.current, identity, recipients, draft, family.id);
+      }
       setDraft("");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "The message could not be delivered.");
