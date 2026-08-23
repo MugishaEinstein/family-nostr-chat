@@ -32,15 +32,17 @@ for line in sys.stdin:
         request = json.loads(line)
         event = request["event"]
         authed = str(request.get("authed") or "").lower()
+        event_pubkey = str(event.get("pubkey") or "").lower()
         family_id = tag_value(event, "h")
         recipient = tag_value(event, "p").lower()
         members = load_spaces().get(family_id, set())
-        authenticated = bool(authed)
-        accepted = event.get("kind") == 1059 and bool(family_id) and authenticated and authed in members and recipient in members
+        # Some strfry builds do not pass an `authed` field to write-policy plugins.
+        # In that case the signed outer gift-wrap's public key is the best available
+        # sender identity. It must be an active member of the tenant named by `h`.
+        sender = authed or event_pubkey
+        accepted = event.get("kind") == 1059 and bool(family_id) and sender in members and recipient in members
         response = {"id": event["id"], "action": "accept" if accepted else "reject"}
-        if not authenticated:
-            response["msg"] = "auth-required: authenticate this device before publishing family messages"
-        elif not accepted:
+        if not accepted:
             response["msg"] = "restricted: this device or recipient is not authorized for that family space"
         print(json.dumps(response, separators=(",", ":")), flush=True)
     except (KeyError, TypeError, json.JSONDecodeError):

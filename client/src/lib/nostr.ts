@@ -236,7 +236,10 @@ export async function publishFamilyMessage(
       },
       senderSecret,
     );
-    const wrappingSecret = generateSecretKey();
+    // Use the enrolled device key for the outer wrapper. This keeps the outer
+    // tenant metadata enforceable by relays that do not expose NIP-42 state to
+    // their write-policy plugins. Message content remains NIP-44 encrypted.
+    const wrappingSecret = senderSecret;
     return finalizeEvent(
       {
         kind: 1059,
