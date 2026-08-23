@@ -1,0 +1,48 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks:
+      - family_net
+
+  relay:
+    build:
+      context: .
+      dockerfile: deploy/relay/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    entrypoint: ["/bin/sh", "/app/start.sh"]
+    volumes:
+      - relay_data:/app/strfry-db
+      - ./deploy/relay/strfry.conf.template:/app/strfry.conf.template:ro
+      - ./deploy/relay/family-allowlist.py:/app/family-allowlist.py:ro
+      - ./deploy/relay/start.sh:/app/start.sh:ro
+    networks:
+      - family_net
+
+  proxy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - family_net
+
+volumes:
+  relay_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  family_net:
+    driver: bridge

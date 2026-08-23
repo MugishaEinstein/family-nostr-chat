@@ -1,0 +1,8 @@
+{$APP_DOMAIN} {
+  encode zstd gzip
+  reverse_proxy web:80
+}
+
+{$RELAY_DOMAIN} {
+  reverse_proxy relay:7777
+}
