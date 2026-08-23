@@ -10,3 +10,4 @@
 - [x] Provide safe registry-cache regeneration and capture the decisive relay-policy logs.
 - [x] Restore the three locally modified relay policy files from the newest repository and validate a new Family Space message.
 - [x] Diagnose and correct the relay startup exit-127 failure after the policy restore.
+- [x] Add a build-time relay-binary assertion and run comprehensive pre-delivery validation of the relay repair.
