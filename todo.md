@@ -13,4 +13,8 @@
 - [x] Add a build-time relay-binary assertion and run comprehensive pre-delivery validation of the relay repair.
 - [x] Confirm the target repository name and place the source repository under the user's GitHub account safely.
 - [x] Verify and set the user’s GitHub-linked identity for future repository commits.
-- [ ] Rewrite existing published commit authors to the verified user identity, verify the remote history, and provide giant’s safe refresh command.
+- [x] Rewrite existing published commit authors to the verified user identity, verify the remote history, and provide giant’s safe refresh command.
+- [ ] Restore the relay after the history refresh and verify external relay connectivity.
+- [ ] Verify and remove any active Manus attribution source from the GitHub contributor view.
+- [ ] Inspect remaining reachable references and determine the safest path to a visibly single-contributor repository.
+- [ ] Deliver each Family Space message to the sending device as well as invited recipients, then validate sender-side visibility.

@@ -183,6 +183,11 @@ export async function enrollWithInviteCode(relay: Relay, identity: LocalIdentity
  * Builds NIP-59 compatible encrypted wraps with a signed outer family `h` tag.
  * The tag exposes tenant metadata only; content remains inside the rumor and seal.
  */
+export function uniqueFamilyMessageRecipients(recipients: string[]) {
+  // Include the sender's own device so it receives and can decrypt a durable copy.
+  return Array.from(new Set(recipients));
+}
+
 export async function publishFamilyMessage(
   relay: Relay,
   identity: LocalIdentity,
@@ -190,7 +195,7 @@ export async function publishFamilyMessage(
   content: string,
   familyId?: string,
 ) {
-  const uniqueRecipients = Array.from(new Set(recipients.filter((pubkey) => pubkey !== identity.pubkey)));
+  const uniqueRecipients = uniqueFamilyMessageRecipients(recipients);
   if (!uniqueRecipients.length) throw new Error("Add at least one family member before sending a message.");
 
   if (!familyId) {
