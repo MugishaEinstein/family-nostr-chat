@@ -1,7 +1,5 @@
-# Family Chat Repair Release
+# Family Chat Setup Guide
 
-- [x] Confirm the replacement product name: Family Chat.
-- [ ] Repair proactive NIP-42 authentication before write-policy evaluation.
-- [ ] Repair recipient discovery and bidirectional encrypted message visibility.
-- [ ] Apply the Family Chat name across the UI, package, and deployment documentation.
-- [ ] Validate the repaired release and provide Ubuntu update instructions.
+- [x] Document the Ubuntu and Docker prerequisites.
+- [x] Provide the exact Nginx Proxy Manager host configuration for the confirmed domains and Docker network.
+- [x] Explain first-device creation, family enrollment, bidirectional message verification, and release updates.

@@ -1,5 +1,7 @@
 # Family Chat — Private Nostr Messenger
 
+For the confirmed Ubuntu and Nginx Proxy Manager deployment at `chat.nostr.africa`, use the step-by-step **[Family Chat Setup Guide](./SETUP_GUIDE.md)**. It includes the exact Docker network, proxy hosts, account-enrollment flow, two-way-message test, update path, and backup commands.
+
 Family Chat is an installable, browser-based family conversation room that publishes **NIP-17 private direct messages** through a Nostr relay you operate. Each browser keeps its own Nostr secret locally, authenticates to the relay with NIP-42, and sends recipient-specific NIP-44/NIP-59 gift wraps. This makes a small household group practical while keeping message contents out of the relay’s readable event content.[1] [2] [3]
 
 > **Threat-model note.** This package is designed for a small, trusted family group—not for high-risk communications. NIP-44 documents important limitations, including no forward secrecy if a long-term key is compromised and potential network metadata exposure.[2] Protect each device, use HTTPS/WSS, and keep regular server backups.
