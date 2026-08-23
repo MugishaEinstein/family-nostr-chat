@@ -1,6 +1,7 @@
-# Nginx Proxy Manager Deployment Follow-up
+# Family Chat Repair Release
 
-- [x] Replace the bundled Caddy proxy path with a Nginx Proxy Manager-compatible Compose configuration.
-- [x] Provide exact Ubuntu commands for `chat.nostr.africa` and the private relay host.
-- [x] Explain the two-step account enrollment and public-key allowlist workflow for each family member.
-- [x] Deliver the concise NPM proxy-host settings and launch runbook.
+- [x] Confirm the replacement product name: Family Chat.
+- [ ] Repair proactive NIP-42 authentication before write-policy evaluation.
+- [ ] Repair recipient discovery and bidirectional encrypted message visibility.
+- [ ] Apply the Family Chat name across the UI, package, and deployment documentation.
+- [ ] Validate the repaired release and provide Ubuntu update instructions.

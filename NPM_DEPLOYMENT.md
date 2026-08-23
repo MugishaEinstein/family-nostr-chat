@@ -1,6 +1,6 @@
 # Nginx Proxy Manager deployment: `chat.nostr.africa`
 
-This runbook assumes that Nginx Proxy Manager (NPM) already runs in Docker on the **same Ubuntu server**. The supplied `docker-compose.npm.yml` joins Hearthline to NPM’s Docker network instead of publishing the chat or relay ports to the internet. This follows NPM’s documented same-network pattern: NPM can reach upstream containers by their Compose service name while those services remain unavailable through the host network.[1]
+This runbook assumes that Nginx Proxy Manager (NPM) already runs in Docker on the **same Ubuntu server**. The supplied `docker-compose.npm.yml` joins Family Chat to NPM’s Docker network instead of publishing the chat or relay ports to the internet. This follows NPM’s documented same-network pattern: NPM can reach upstream containers by their Compose service name while those services remain unavailable through the host network.[1]
 
 > Use **two** hostnames. The chat application is `chat.nostr.africa`; the WebSocket relay is `relay.chat.nostr.africa`. Keeping them separate avoids mixing the browser application and its persistent relay protocol on one proxy host.
 
@@ -50,7 +50,7 @@ Attach NPM itself to the same network if it is not already connected. Replace `n
 docker network connect <actual-npm-docker-network-name> npm-app
 ```
 
-Start Hearthline. This creates only the application and relay services—NPM remains the sole listener on ports 80 and 443.
+Start Family Chat. This creates only the application and relay services—NPM remains the sole listener on ports 80 and 443.
 
 ```bash
 docker compose -f docker-compose.npm.yml up -d --build
@@ -92,7 +92,7 @@ The relay request should return NIP-11 relay metadata. NIP-11 is the relay infor
 
 ## 4. Create and enroll the administrator account
 
-Hearthline does not use email/password accounts. A person’s **Nostr key pair is their account**. The private part stays in their browser; the hexadecimal public key is copied to the server allowlist.
+Family Chat does not use email/password accounts. A person’s **Nostr key pair is their account**. The private part stays in their browser; the hexadecimal public key is copied to the server allowlist.
 
 1. Visit `https://chat.nostr.africa` in the administrator’s preferred browser and enter a name plus `wss://relay.chat.nostr.africa`.
 2. Select **Set a key at this place**. The initial relay will not accept messages yet, which is expected.

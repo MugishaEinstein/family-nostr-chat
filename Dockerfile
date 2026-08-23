@@ -1,4 +1,4 @@
-# Hearthline deployment image: build the static private conversation client, then serve it with Caddy.
+# Family Chat deployment image: build the static private conversation client, then serve it with Caddy.
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./

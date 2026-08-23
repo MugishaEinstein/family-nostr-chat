@@ -21,7 +21,7 @@ relay {
   }
 
   info {
-    name = "Hearthline family relay"
+    name = "Family Chat private relay"
     description = "Private relay for an enrolled family group."
     contact = "Family administrator"
   }

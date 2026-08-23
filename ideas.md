@@ -74,3 +74,64 @@ The mark is a **sealed doorway**: three simple, unevenly nested arch strokes for
 - Setup screens carry the same ledger language as the conversation room: hairline rules, marginalia labels, and a visible Hearth Red stitched binding connect identity, relay, and key actions.
 - The wordmark pairs a Fraunces “Hearthline” with a light, letter-spaced sans-serif descriptor; the circular sealed-door mark is never shown as an anonymous icon.
 - Trust copy is designed as quiet marginalia rather than as footer fine print. “Your key stays here” and the family relay status receive equal visual care to the primary call to action.
+
+## Selected Evolution: Family Chat Messenger
+
+### Design Movement
+
+**Warm utility messenger**: the instant legibility and conversation priority of a premium mobile messenger, softened with Family Chat’s domestic color and sealed-door mark.
+
+### Core Principles
+
+1. **Conversation before configuration.** The active room fills the product; relay and key controls are one tap away, never competing with messages.
+2. **Familiar at a glance.** A recognisable conversation rail, identity avatars, rounded bubbles, search, and an anchored composer reduce the learning curve for every generation.
+3. **Private by design, quiet by default.** Encryption and relay health appear as compact, calm context rather than technical exposition.
+4. **Thumb-first mobile.** On narrow screens the chat is the whole screen, with people and account controls in an intentional drawer.
+
+### Color Philosophy
+
+Soft slate and paper provide a low-fatigue messenger surface. Family Red remains a human, ownable signal for the active room and send action, while sage indicates a healthy private relay without the false urgency of neon green.
+
+### Layout Paradigm
+
+A familiar **conversation rail + message canvas** replaces the ledger spread. An optional member drawer carries secondary controls; the message canvas holds a concise identity header, chronological bubble stream, and persistent composer.
+
+### Signature Elements
+
+1. The sealed-door mark becomes a compact group avatar.
+2. A small lock banner makes private delivery unmistakable without interrupting reading.
+3. Hearth Red appears in the active conversation and send affordance only.
+
+### Interaction Philosophy
+
+Controls are direct and discoverable: people management opens from the room header, emoji insertion is immediate, and unavailable attachments identify their status plainly. Keyboard sending is kept fast; every destructive control remains in settings.
+
+### Animation
+
+Use 160–220ms opacity and transform transitions for drawers, emoji popovers, and new bubbles. Buttons confirm with a brief 0.97 active scale. Respect reduced motion.
+
+### Typography System
+
+**DM Sans** leads everyday messaging for clarity. **Fraunces** remains reserved for onboarding and rare empty-state moments, preserving warmth without sacrificing chat-scanning speed.
+
+### Brand Essence
+
+**Family Chat: a private family messenger with the familiarity people expect and the relay ownership families deserve.**
+
+Personality: **clear, close, trustworthy**.
+
+### Brand Voice
+
+Headlines are warm and simple; controls are literal. Examples: “Your family room is ready.” and “Messages are sealed for this family room.”
+
+### Wordmark & Logo
+
+The sealed doorway stays the distinctive visual anchor, now used as a compact group-avatar system beside the Family Chat wordmark.
+
+### Signature Brand Color
+
+**Family Red — #A83D32** still marks the active room and the send action.
+
+### Setup-to-Messenger Bridge
+
+Setup retains its more ceremonial ledger composition, but now introduces the sealed group-avatar, encrypted-chat promise, and a concise messenger entry preview before account creation. **Family Chat** is the public product name; “Private family messenger” is the single supporting descriptor throughout the journey.

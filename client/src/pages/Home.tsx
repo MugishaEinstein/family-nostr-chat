@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import MessengerWorkspace from "@/components/MessengerWorkspace";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ import {
   KeyRound,
   Link2,
   LoaderCircle,
+  LockKeyhole,
   LogOut,
   Menu,
   Plus,
@@ -116,6 +118,8 @@ export default function Home() {
   const relayRef = useRef<Relay | null>(null);
   const subscriptionRef = useRef<Subscription | null>(null);
   const allowedKeysRef = useRef<string[]>([]);
+  const authRetryTimerRef = useRef<number | null>(null);
+  const authRetryCountRef = useRef(0);
 
   const selfMember = useMemo<FamilyMember | null>(() => {
     if (!identity) return null;
@@ -144,6 +148,11 @@ export default function Home() {
   };
 
   const disconnect = () => {
+    if (authRetryTimerRef.current !== null) {
+      window.clearTimeout(authRetryTimerRef.current);
+      authRetryTimerRef.current = null;
+    }
+    authRetryCountRef.current = 0;
     subscriptionRef.current?.close();
     subscriptionRef.current = null;
     relayRef.current?.close();
@@ -179,18 +188,37 @@ export default function Home() {
       storeRelay(normalizedRelay);
       setConnection("connected");
       setConnectionNote("Private relay connected");
-      subscriptionRef.current = relay.subscribe(
-        [{ kinds: [1059], "#p": [requestedIdentity.pubkey], limit: 200 }],
-        {
-          onevent: (event) => {
-            const message = unwrapFamilyMessage(event, requestedIdentity);
-            if (message && isFamilyRoomMessage(message, allowedKeysRef.current)) addMessage(message);
+      const subscribeToFamilyRoom = () => {
+        subscriptionRef.current?.close();
+        subscriptionRef.current = relay.subscribe(
+          [{ kinds: [1059], "#p": [requestedIdentity.pubkey], limit: 200 }],
+          {
+            onevent: (event) => {
+              const message = unwrapFamilyMessage(event, requestedIdentity);
+              if (message && isFamilyRoomMessage(message, allowedKeysRef.current)) addMessage(message);
+            },
+            onclose: (reason) => {
+              if (reason?.startsWith("auth-required:")) {
+                authRetryCountRef.current += 1;
+                if (authRetryCountRef.current <= 4 && relayRef.current === relay) {
+                  setConnectionNote("Authenticating your private relay…");
+                  authRetryTimerRef.current = window.setTimeout(() => {
+                    authRetryTimerRef.current = null;
+                    subscribeToFamilyRoom();
+                  }, 900);
+                  return;
+                }
+                setConnection("error");
+                setConnectionNote("Private relay authentication did not complete. Reconnect and try again.");
+                return;
+              }
+              if (reason) setConnectionNote(reason);
+            },
           },
-          onclose: (reason) => {
-            if (reason) setConnectionNote(reason);
-          },
-        },
-      );
+        );
+      };
+      authRetryCountRef.current = 0;
+      subscribeToFamilyRoom();
     } catch (error) {
       setConnection("error");
       setConnectionNote(error instanceof Error ? error.message : "Unable to reach the relay.");
@@ -254,12 +282,12 @@ export default function Home() {
     }
   };
 
-  const addMember = () => {
+  const addMember = (name = memberName, key = memberKey) => {
     try {
-      const pubkey = parsePublicKey(memberKey);
-      if (!memberName.trim()) throw new Error("Give this family member a name.");
+      const pubkey = parsePublicKey(key);
+      if (!name.trim()) throw new Error("Give this family member a name.");
       if (members.some((member) => member.pubkey === pubkey)) throw new Error("That family member is already here.");
-      const nextMember: FamilyMember = { id: crypto.randomUUID(), name: memberName.trim(), pubkey };
+      const nextMember: FamilyMember = { id: crypto.randomUUID(), name: name.trim(), pubkey };
       saveMembers([...members, nextMember]);
       setMemberName("");
       setMemberKey("");
@@ -332,16 +360,16 @@ export default function Home() {
             <div className="absolute inset-0 bg-[linear-gradient(125deg,rgba(54,45,38,.82),rgba(92,54,43,.5)_57%,rgba(47,46,42,.28))]" />
             <div className="setup-paper-noise" />
             <div className="relative flex items-center gap-3">
-              <img src={sealUrl} alt="Hearthline" className="h-11 w-11 rounded-full bg-[#F7F2E9] p-1.5" />
+              <img src={sealUrl} alt="Family Chat" className="h-11 w-11 rounded-full bg-[#F7F2E9] p-1.5" />
               <div className="flex flex-col leading-none">
-                <span className="font-['Fraunces'] text-[1.42rem] font-semibold tracking-[-.045em] text-[#FFF9F2]">Hearthline</span>
-                <span className="mt-1.5 font-['DM_Sans'] text-[.55rem] font-bold tracking-[.17em] text-[#E7C3A5] uppercase">Family correspondence</span>
+                <span className="font-['Fraunces'] text-[1.42rem] font-semibold tracking-[-.045em] text-[#FFF9F2]">Family Chat</span>
+                <span className="mt-1.5 font-['DM_Sans'] text-[.55rem] font-bold tracking-[.17em] text-[#E7C3A5] uppercase">Private family messenger</span>
               </div>
             </div>
             <div className="relative max-w-xl py-10 lg:pb-20">
-              <p className="mb-5 font-['DM_Sans'] text-xs font-bold tracking-[0.18em] text-[#E3AA78] uppercase">Private family correspondence</p>
+              <p className="mb-5 font-['DM_Sans'] text-xs font-bold tracking-[0.18em] text-[#E3AA78] uppercase">A private family messenger</p>
               <h1 className="font-['Fraunces'] text-5xl leading-[.97] tracking-[-0.045em] sm:text-6xl lg:text-7xl">A room for the people you keep close.</h1>
-              <p className="mt-7 max-w-md font-['DM_Sans'] text-base leading-7 text-[#E7DDD0]">Hearthline sends signed, encrypted Nostr messages through the relay your family runs.</p>
+              <p className="mt-7 max-w-md font-['DM_Sans'] text-base leading-7 text-[#E7DDD0]">Family Chat sends signed, encrypted Nostr messages through the relay your family runs.</p>
             </div>
             <div className="relative flex items-center gap-3 border-l-2 border-[#D98C75] pl-3 font-['DM_Sans'] text-xs text-[#E7D4C1]">
               <ShieldCheck className="h-4 w-4 shrink-0 text-[#F1B185]" />
@@ -356,6 +384,7 @@ export default function Home() {
                 <p className="eyebrow">Bring your key, or make one</p>
                 <h2 className="mt-3 font-['Fraunces'] text-4xl tracking-[-0.04em] text-[#302C28]">Open the family room</h2>
                 <p className="mt-3 font-['DM_Sans'] text-sm leading-6 text-[#726A61]">Start by naming this device and adding the secure relay address from your deployment.</p>
+                <div className="setup-messenger-hint"><span className="setup-hint-orbit"><img src={sealUrl} alt="" /></span><span className="flex-1"><strong>Family chat, kept close</strong><small><LockKeyhole className="h-3 w-3" />Your conversation begins encrypted</small></span><ArrowUp className="h-4 w-4" /></div>
               </div>
 
               <div className="ledger-form space-y-5">
@@ -399,6 +428,29 @@ export default function Home() {
   }
 
   return (
+    <MessengerWorkspace
+      identity={identity}
+      visibleMembers={visibleMembers}
+      members={members}
+      memberByKey={memberByKey}
+      messages={messages}
+      connection={connection}
+      connectionNote={connectionNote}
+      relayUrl={relayUrl}
+      settingsRelayUrl={settingsRelayUrl}
+      setSettingsRelayUrl={setSettingsRelayUrl}
+      draft={draft}
+      setDraft={setDraft}
+      isSending={isSending}
+      onSend={() => void sendMessage()}
+      onAddMember={(name, key) => addMember(name, key)}
+      onRemoveMember={removeMember}
+      onUpdateRelay={() => void updateRelay()}
+      onCopyPublicKey={() => void copyPublicKey()}
+      onForgetDevice={forgetDevice}
+    />
+  );
+  /*
     <main className="h-screen min-h-[600px] overflow-hidden bg-[#F7F2E9] text-[#302C28]">
       <div className="ledger-layout h-full">
         <aside className={`family-rail ${showMobileRail ? "family-rail--open" : ""}`} aria-label="Family members">
@@ -578,4 +630,5 @@ export default function Home() {
       )}
     </main>
   );
+  */
 }

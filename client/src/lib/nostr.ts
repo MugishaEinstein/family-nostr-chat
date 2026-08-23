@@ -19,7 +19,8 @@ export type FamilyMessage = {
   tags: string[][];
 };
 
-export const FAMILY_SUBJECT = "Hearthline family room";
+export const FAMILY_SUBJECT = "Family Chat room";
+const LEGACY_FAMILY_SUBJECT = "Hearthline family room";
 
 const IDENTITY_KEY = "hearthline.identity.v1";
 const MEMBERS_KEY = "hearthline.members.v1";
@@ -153,7 +154,7 @@ export function unwrapFamilyMessage(event: Event, identity: LocalIdentity): Fami
     const [rumor] = nip59.unwrapManyEvents([event], utils.hexToBytes(identity.secretHex));
     if (!rumor || rumor.kind !== 14) return null;
     const subject = rumor.tags.find((tag) => tag[0] === "subject")?.[1];
-    if (subject !== FAMILY_SUBJECT) return null;
+    if (subject !== FAMILY_SUBJECT && subject !== LEGACY_FAMILY_SUBJECT) return null;
     return {
       id: rumor.id,
       content: rumor.content,
