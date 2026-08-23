@@ -33,6 +33,7 @@ with tempfile.TemporaryDirectory() as directory:
         {"event": event("same-family", RECIPIENT), "authed": SENDER},
         {"event": event("outsider-recipient", OUTSIDER), "authed": SENDER},
         {"event": event("outsider-sender", RECIPIENT), "authed": OUTSIDER},
+        {"event": event("unauthenticated", RECIPIENT)},
     ]
     environment = {**os.environ, "FAMILY_REGISTRY_PATH": str(registry_path)}
     completed = subprocess.run(
@@ -48,5 +49,6 @@ with tempfile.TemporaryDirectory() as directory:
 assert responses[0] == {"id": "same-family", "action": "accept"}
 assert responses[1]["action"] == "reject"
 assert responses[2]["action"] == "reject"
+assert responses[3]["action"] == "reject"
+assert responses[3]["msg"].startswith("auth-required:")
 print("family allowlist policy: same-family accept; cross-family reject")
-

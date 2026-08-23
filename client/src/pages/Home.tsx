@@ -18,6 +18,7 @@ import {
   isFamilyRoomMessage,
   normalizeRelayUrl,
   publishFamilyMessage,
+  signRelayAuth,
   storeFamilyContext,
   storeIdentity,
   storeMembers,
@@ -67,7 +68,6 @@ export default function Home() {
   const relayRef = useRef<Relay | null>(null);
   const subscriptionRef = useRef<Subscription | null>(null);
   const allowedKeysRef = useRef<string[]>([]);
-  const authRetryTimerRef = useRef<number | null>(null);
 
   const membersQuery = trpc.family.members.useQuery(
     { familyId: family?.id ?? EMPTY_FAMILY_ID },
@@ -96,8 +96,6 @@ export default function Home() {
   };
 
   const disconnect = () => {
-    if (authRetryTimerRef.current !== null) window.clearTimeout(authRetryTimerRef.current);
-    authRetryTimerRef.current = null;
     subscriptionRef.current?.close();
     subscriptionRef.current = null;
     relayRef.current?.close();
@@ -123,6 +121,7 @@ export default function Home() {
       setConnection("connected");
       setConnectionNote("Private family space connected");
 
+      let hasAuthenticated = false;
       const subscribe = () => {
         subscriptionRef.current?.close();
         subscriptionRef.current = relay.subscribe(
@@ -134,8 +133,22 @@ export default function Home() {
             },
             onclose: (reason) => {
               if (reason?.startsWith("auth-required:")) {
+                if (hasAuthenticated) {
+                  setConnection("error");
+                  setConnectionNote("The relay did not accept this device authentication.");
+                  return;
+                }
                 setConnectionNote("Authenticating your private room…");
-                authRetryTimerRef.current = window.setTimeout(subscribe, 850);
+                void relay
+                  .auth((template) => signRelayAuth(template, requestedIdentity))
+                  .then(() => {
+                    hasAuthenticated = true;
+                    subscribe();
+                  })
+                  .catch((error) => {
+                    setConnection("error");
+                    setConnectionNote(error instanceof Error ? error.message : "Relay authentication failed.");
+                  });
                 return;
               }
               if (reason) setConnectionNote(reason);

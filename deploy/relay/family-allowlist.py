@@ -31,13 +31,16 @@ for line in sys.stdin:
     try:
         request = json.loads(line)
         event = request["event"]
-        authed = request.get("authed", "").lower()
+        authed = str(request.get("authed") or "").lower()
         family_id = tag_value(event, "h")
         recipient = tag_value(event, "p").lower()
         members = load_spaces().get(family_id, set())
-        accepted = event.get("kind") == 1059 and bool(family_id) and authed in members and recipient in members
+        authenticated = bool(authed)
+        accepted = event.get("kind") == 1059 and bool(family_id) and authenticated and authed in members and recipient in members
         response = {"id": event["id"], "action": "accept" if accepted else "reject"}
-        if not accepted:
+        if not authenticated:
+            response["msg"] = "auth-required: authenticate this device before publishing family messages"
+        elif not accepted:
             response["msg"] = "restricted: this device or recipient is not authorized for that family space"
         print(json.dumps(response, separators=(",", ":")), flush=True)
     except (KeyError, TypeError, json.JSONDecodeError):

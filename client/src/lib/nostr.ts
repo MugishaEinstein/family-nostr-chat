@@ -1,4 +1,4 @@
-import { nip19, nip44, nip59, Relay, utils, finalizeEvent, generateSecretKey, getEventHash, getPublicKey, type Event } from "nostr-tools";
+import { nip19, nip44, nip59, Relay, utils, finalizeEvent, generateSecretKey, getEventHash, getPublicKey, type Event, type EventTemplate } from "nostr-tools";
 
 export type LocalIdentity = {
   secretHex: string;
@@ -142,8 +142,13 @@ export function clearFamilyContext() {
 
 export function buildRelay(relayUrl: string, identity: LocalIdentity) {
   const relay = new Relay(relayUrl);
-  relay.onauth = async (template) => finalizeEvent(template, utils.hexToBytes(identity.secretHex));
+  relay.onauth = async (template) => signRelayAuth(template, identity);
   return relay;
+}
+
+/** Signs the pending NIP-42 challenge with this device's Family Space identity. */
+export async function signRelayAuth(template: EventTemplate, identity: LocalIdentity) {
+  return finalizeEvent(template, utils.hexToBytes(identity.secretHex));
 }
 
 /** Signs a NIP-98-style request authorization. The private key never leaves this device. */
