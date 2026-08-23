@@ -133,7 +133,7 @@ export default function MessengerWorkspace({
   };
 
   return (
-    <main className="chat-app h-screen min-h-[560px] overflow-hidden text-[#26302d]">
+    <main className="chat-app overflow-hidden text-[#26302d]">
       <div className="messenger-layout h-full">
         <aside className={`chat-sidebar ${showSidebar ? "chat-sidebar--open" : ""}`} aria-label="Family conversations">
           <div className="chat-sidebar-head">
@@ -168,7 +168,7 @@ export default function MessengerWorkspace({
             <div className="flex items-center gap-1"><button type="button" onClick={() => setShowPeople(true)} className="header-action"><UsersRound className="h-4 w-4" /><span className="hidden sm:inline">People</span></button><button type="button" onClick={() => setShowSettings(true)} className="icon-button" aria-label="Room settings"><Info className="h-5 w-5" /></button><button type="button" className="icon-button" onClick={() => setShowSettings(true)} aria-label="More options"><MoreHorizontal className="h-5 w-5" /></button></div>
           </header>
 
-          <div className="message-scroll min-h-0 flex-1 overflow-y-auto">
+          <div className="message-scroll min-h-0 flex-1 overflow-y-auto" role="log" aria-label="Family message history" tabIndex={0}>
             <div className="message-stage">
               <div className="privacy-banner"><LockKeyhole className="h-3.5 w-3.5" /><span>Messages are sealed for this family room</span></div>
               {messages.length === 0 ? (

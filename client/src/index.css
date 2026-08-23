@@ -140,9 +140,9 @@
 
 /* Hearth Messenger design reminder: conversation-first clarity, familiar chat mechanics, warm private signals, and a focused mobile message canvas. */
 @layer components {
-  .chat-app { background: #edf0f3; font-family: "DM Sans", sans-serif; }
-  .messenger-layout { display: grid; grid-template-columns: 318px minmax(0, 1fr); max-width: 1560px; margin: 0 auto; background: #fff; }
-  .chat-sidebar { display: flex; min-width: 0; flex-direction: column; background: #fff; border-right: 1px solid #e6e9ed; }
+  .chat-app { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; background: #edf0f3; font-family: "DM Sans", sans-serif; }
+  .messenger-layout { display: grid; height: 100%; min-height: 0; grid-template-columns: 318px minmax(0, 1fr); max-width: 1560px; margin: 0 auto; overflow: hidden; background: #fff; }
+  .chat-sidebar { display: flex; min-height: 0; min-width: 0; flex-direction: column; overflow: hidden; background: #fff; border-right: 1px solid #e6e9ed; }
   .chat-sidebar-head { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.15rem 1rem; }
   .brand-lockup { display: inline-flex; align-items: center; gap: .55rem; color: #25302e; font-family: "Fraunces", serif; font-size: 1.27rem; font-weight: 600; letter-spacing: -.04em; }
   .brand-lockup img { width: 2rem; height: 2rem; border-radius: 50%; background: #fae6e1; padding: .2rem; }
@@ -180,7 +180,7 @@
   .self-card:hover { background: #f4f6f6; }
   .self-card strong { display: block; color: #384542; font-size: .77rem; }
   .self-card small { display: block; margin-top: .08rem; color: #97a29f; font-size: .63rem; }
-  .messenger-pane { background: radial-gradient(circle at 10% 4%, rgba(245,234,228,.4), transparent 25rem), #fbfcfd; }
+  .messenger-pane { min-height: 0; overflow: hidden; background: radial-gradient(circle at 10% 4%, rgba(245,234,228,.4), transparent 25rem), #fbfcfd; }
   .messenger-header { display: flex; min-height: 74px; align-items: center; justify-content: space-between; border-bottom: 1px solid #e8ecee; background: rgba(255,255,255,.88); padding: .8rem clamp(1rem, 3vw, 2rem); backdrop-filter: blur(14px); }
   .messenger-header h1 { color: #26302d; font-size: .98rem; font-weight: 800; line-height: 1.15; }
   .messenger-header p { display: flex; align-items: center; gap: .35rem; margin-top: .24rem; color: #84918e; font-size: .69rem; }
@@ -190,7 +190,8 @@
   .connection-dot--error { background: #c65749; }
   .header-action { display: inline-flex; align-items: center; gap: .45rem; height: 2.25rem; border-radius: .72rem; background: #f2f4f5; padding: 0 .7rem; color: #5b6966; font-size: .72rem; font-weight: 700; transition: background 160ms var(--ease-out), transform 160ms var(--ease-out); }
   .header-action:hover { background: #e9eeee; }
-  .message-scroll { scroll-behavior: smooth; }
+  .message-scroll { min-height: 0; overscroll-behavior: contain; scrollbar-gutter: stable; scroll-behavior: smooth; }
+  .message-scroll:focus-visible { outline: 2px solid #c98175; outline-offset: -2px; }
   .message-stage { width: min(100%, 820px); margin: 0 auto; padding: 1.3rem clamp(1rem, 4vw, 2.8rem) 2rem; }
   .privacy-banner { display: flex; width: fit-content; align-items: center; gap: .4rem; margin: 0 auto 1.8rem; border: 1px solid #e2e8e7; border-radius: 999px; background: #fff; padding: .38rem .7rem; color: #71817e; font-size: .66rem; font-weight: 600; box-shadow: 0 2px 8px rgba(38,48,45,.04); }
   .privacy-banner svg { color: #598778; }
