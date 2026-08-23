@@ -11,3 +11,5 @@
 - [x] Restore the three locally modified relay policy files from the newest repository and validate a new Family Space message.
 - [x] Diagnose and correct the relay startup exit-127 failure after the policy restore.
 - [x] Add a build-time relay-binary assertion and run comprehensive pre-delivery validation of the relay repair.
+- [x] Confirm the target repository name and place the source repository under the user's GitHub account safely.
+- [x] Verify and set the user’s GitHub-linked identity for future repository commits.
