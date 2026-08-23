@@ -36,6 +36,8 @@ type ConnectionState = "idle" | "connecting" | "connected" | "error";
 
 type MessengerWorkspaceProps = {
   identity: LocalIdentity;
+  familyName: string;
+  familyRole: "owner" | "member";
   visibleMembers: FamilyMember[];
   members: FamilyMember[];
   memberByKey: Map<string, FamilyMember>;
@@ -49,7 +51,7 @@ type MessengerWorkspaceProps = {
   setDraft: (value: string) => void;
   isSending: boolean;
   onSend: () => void;
-  onAddMember: (name: string, key: string) => void;
+  onCreateInvite: () => Promise<string | null>;
   onRemoveMember: (pubkey: string) => void;
   onUpdateRelay: () => void;
   onForgetDevice: () => void;
@@ -84,6 +86,8 @@ function FamilyOrbit({ members, className = "" }: { members: FamilyMember[]; cla
 
 export default function MessengerWorkspace({
   identity,
+  familyName,
+  familyRole,
   visibleMembers,
   members,
   memberByKey,
@@ -97,7 +101,7 @@ export default function MessengerWorkspace({
   setDraft,
   isSending,
   onSend,
-  onAddMember,
+  onCreateInvite,
   onRemoveMember,
   onUpdateRelay,
   onForgetDevice,
@@ -107,8 +111,8 @@ export default function MessengerWorkspace({
   const [showSettings, setShowSettings] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
-  const [memberName, setMemberName] = useState("");
-  const [memberKey, setMemberKey] = useState("");
+  const [latestInvite, setLatestInvite] = useState("");
+  const [isCreatingInvite, setIsCreatingInvite] = useState(false);
 
   const filteredMembers = useMemo(() => {
     const query = memberSearch.trim().toLowerCase();
@@ -116,10 +120,11 @@ export default function MessengerWorkspace({
   }, [memberSearch, visibleMembers]);
   const latestMessage = messages.length ? messages[messages.length - 1] : null;
 
-  const addMember = () => {
-    onAddMember(memberName, memberKey);
-    setMemberName("");
-    setMemberKey("");
+  const createInvite = async () => {
+    setIsCreatingInvite(true);
+    const code = await onCreateInvite();
+    if (code) setLatestInvite(code);
+    setIsCreatingInvite(false);
   };
 
   const appendEmoji = (emoji: string) => {
@@ -141,7 +146,7 @@ export default function MessengerWorkspace({
           <div className="chat-list">
             <button type="button" className="conversation-item conversation-item--active">
               <FamilyOrbit members={visibleMembers} />
-              <span className="min-w-0 flex-1 text-left"><span className="conversation-title">Family</span><span className="conversation-preview">{latestMessage ? `${memberByKey.get(latestMessage.author)?.name ?? "Someone"}: ${latestMessage.content}` : "Your private family room"}</span></span>
+              <span className="min-w-0 flex-1 text-left"><span className="conversation-title">{familyName}</span><span className="conversation-preview">{latestMessage ? `${memberByKey.get(latestMessage.author)?.name ?? "Someone"}: ${latestMessage.content}` : "Your private family room"}</span></span>
               <span className="conversation-time">{latestMessage ? messageTime(latestMessage.createdAt) : ""}</span>
             </button>
           </div>
@@ -159,7 +164,7 @@ export default function MessengerWorkspace({
 
         <section className="messenger-pane relative flex h-full min-w-0 flex-col">
           <header className="messenger-header">
-            <div className="flex min-w-0 items-center gap-3"><button type="button" onClick={() => setShowSidebar(true)} className="icon-button lg:hidden" aria-label="Open conversations"><Menu className="h-5 w-5" /></button><FamilyOrbit members={visibleMembers} className="family-orbit--header" /><div className="min-w-0"><h1>Family</h1><p><ConnectionDot state={connection} />{connection === "connected" ? `${Math.max(visibleMembers.length - 1, 0)} members · Private relay` : connection === "connecting" ? "Connecting to relay" : "Relay needs attention"}</p></div></div>
+            <div className="flex min-w-0 items-center gap-3"><button type="button" onClick={() => setShowSidebar(true)} className="icon-button lg:hidden" aria-label="Open conversations"><Menu className="h-5 w-5" /></button><FamilyOrbit members={visibleMembers} className="family-orbit--header" /><div className="min-w-0"><h1>{familyName}</h1><p><ConnectionDot state={connection} />{connection === "connected" ? `${Math.max(visibleMembers.length - 1, 0)} members · Private relay` : connection === "connecting" ? "Connecting to relay" : "Relay needs attention"}</p></div></div>
             <div className="flex items-center gap-1"><button type="button" onClick={() => setShowPeople(true)} className="header-action"><UsersRound className="h-4 w-4" /><span className="hidden sm:inline">People</span></button><button type="button" onClick={() => setShowSettings(true)} className="icon-button" aria-label="Room settings"><Info className="h-5 w-5" /></button><button type="button" className="icon-button" onClick={() => setShowSettings(true)} aria-label="More options"><MoreHorizontal className="h-5 w-5" /></button></div>
           </header>
 
@@ -167,7 +172,7 @@ export default function MessengerWorkspace({
             <div className="message-stage">
               <div className="privacy-banner"><LockKeyhole className="h-3.5 w-3.5" /><span>Messages are sealed for this family room</span></div>
               {messages.length === 0 ? (
-                <div className="messenger-empty"><span className="empty-seal"><img src={sealUrl} alt="" /></span><h2>Your family room is ready</h2><p>Start the conversation. Messages are encrypted before they leave this device.</p><button type="button" onClick={() => setShowPeople(true)}><UsersRound className="h-4 w-4" />Add family members</button></div>
+                <div className="messenger-empty"><span className="empty-seal"><img src={sealUrl} alt="" /></span><h2>Your family room is ready</h2><p>Start the conversation. Messages are encrypted before they leave this device.</p><button type="button" onClick={() => setShowPeople(true)}><UsersRound className="h-4 w-4" />{familyRole === "owner" ? "Invite family members" : "See family members"}</button></div>
               ) : (
                 <div className="message-feed">
                   {messages.map((message) => {
@@ -196,9 +201,9 @@ export default function MessengerWorkspace({
         </section>
       </div>
 
-      {showPeople && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowPeople(false)}><section className="hearth-modal messenger-modal" role="dialog" aria-modal="true" aria-labelledby="people-title" onMouseDown={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-5"><div><p className="modal-kicker">Family room</p><h2 id="people-title">People</h2></div><button type="button" onClick={() => setShowPeople(false)} className="modal-close" aria-label="Close"><X className="h-4 w-4" /></button></div><p className="modal-copy">Add the public key of everyone who belongs in this family room. Each sender uses this list to seal a message for the right people.</p><div className="add-person-form"><Input value={memberName} onChange={(event) => setMemberName(event.target.value)} placeholder="Name, for example Jean" /><Input value={memberKey} onChange={(event) => setMemberKey(event.target.value)} placeholder="npub1… or hexadecimal key" className="font-mono text-xs" /><Button onClick={addMember} className="hearth-primary"><Plus className="mr-2 h-4 w-4" />Add person</Button></div><div className="people-modal-list">{visibleMembers.map((member) => <div key={member.pubkey} className="people-modal-row"><span className="person-avatar">{initials(member.name)}</span><span className="min-w-0 flex-1"><strong>{member.pubkey === identity.pubkey ? `${member.name} (You)` : member.name}</strong><small>{shortKey(member.pubkey, 10)}</small></span>{member.pubkey !== identity.pubkey && <button type="button" onClick={() => onRemoveMember(member.pubkey)} aria-label={`Remove ${member.name}`}><X className="h-4 w-4" /></button>}</div>)}</div></section></div>}
+      {showPeople && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowPeople(false)}><section className="hearth-modal messenger-modal" role="dialog" aria-modal="true" aria-labelledby="people-title" onMouseDown={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-5"><div><p className="modal-kicker">Family space</p><h2 id="people-title">People</h2></div><button type="button" onClick={() => setShowPeople(false)} className="modal-close" aria-label="Close"><X className="h-4 w-4" /></button></div><p className="modal-copy">Members are verified by this family space. {familyRole === "owner" ? "Create an invite code to add someone without sharing keys." : "Ask a family owner for an invite code to add another device."}</p>{familyRole === "owner" && <div className="add-person-form"><Button onClick={() => void createInvite()} disabled={isCreatingInvite} className="hearth-primary">{isCreatingInvite ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}Create invite code</Button>{latestInvite && <Input value={latestInvite} readOnly className="font-mono text-xs" aria-label="Latest family invite code" />}</div>}<div className="people-modal-list">{visibleMembers.map((member) => <div key={member.pubkey} className="people-modal-row"><span className="person-avatar">{initials(member.name)}</span><span className="min-w-0 flex-1"><strong>{member.pubkey === identity.pubkey ? `${member.name} (You)` : member.name}</strong><small>{shortKey(member.pubkey, 10)}</small></span>{familyRole === "owner" && member.pubkey !== identity.pubkey && <button type="button" onClick={() => onRemoveMember(member.pubkey)} aria-label={`Remove ${member.name}`}><X className="h-4 w-4" /></button>}</div>)}</div></section></div>}
 
-      {showSettings && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowSettings(false)}><section className="hearth-modal messenger-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" onMouseDown={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-5"><div><p className="modal-kicker">This device</p><h2 id="settings-title">Privacy & relay</h2></div><button type="button" onClick={() => setShowSettings(false)} className="modal-close" aria-label="Close"><X className="h-4 w-4" /></button></div><div className="settings-identity"><span className="person-avatar person-avatar--self">{initials(visibleMembers.find((member) => member.pubkey === identity.pubkey)?.name ?? "You")}</span><div className="min-w-0 flex-1"><strong>{visibleMembers.find((member) => member.pubkey === identity.pubkey)?.name ?? "You"}</strong><small>{displayNpub(identity.pubkey)}</small></div></div><div className="auto-enrollment-note"><ShieldCheck className="h-4 w-4" /><span>This device joined your family relay automatically with its invite code.</span></div><label className="modal-label">Family relay<Input value={settingsRelayUrl} onChange={(event) => setSettingsRelayUrl(event.target.value)} /></label><div className="relay-status"><CircleAlert className="h-4 w-4" />{connectionNote || relayUrl}</div><Button onClick={onUpdateRelay} className="hearth-primary mt-5 w-full"><Link2 className="mr-2 h-4 w-4" />Save and reconnect</Button><button type="button" onClick={onForgetDevice} className="forget-link"><LogOut className="h-3.5 w-3.5" />Forget this device</button><p className="settings-footnote"><ShieldCheck className="h-3.5 w-3.5" />Your private key remains in this browser.</p></section></div>}
+      {showSettings && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowSettings(false)}><section className="hearth-modal messenger-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" onMouseDown={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-5"><div><p className="modal-kicker">This device</p><h2 id="settings-title">Privacy & relay</h2></div><button type="button" onClick={() => setShowSettings(false)} className="modal-close" aria-label="Close"><X className="h-4 w-4" /></button></div><div className="settings-identity"><span className="person-avatar person-avatar--self">{initials(visibleMembers.find((member) => member.pubkey === identity.pubkey)?.name ?? "You")}</span><div className="min-w-0 flex-1"><strong>{visibleMembers.find((member) => member.pubkey === identity.pubkey)?.name ?? "You"}</strong><small>{displayNpub(identity.pubkey)}</small></div></div><div className="auto-enrollment-note"><ShieldCheck className="h-4 w-4" /><span>This device is an authorized member of {familyName}. The server verifies family access before relay delivery.</span></div><label className="modal-label">Family relay<Input value={settingsRelayUrl} onChange={(event) => setSettingsRelayUrl(event.target.value)} /></label><div className="relay-status"><CircleAlert className="h-4 w-4" />{connectionNote || relayUrl}</div><Button onClick={onUpdateRelay} className="hearth-primary mt-5 w-full"><Link2 className="mr-2 h-4 w-4" />Save and reconnect</Button><button type="button" onClick={onForgetDevice} className="forget-link"><LogOut className="h-3.5 w-3.5" />Forget this device</button><p className="settings-footnote"><ShieldCheck className="h-3.5 w-3.5" />Your private key remains in this browser.</p></section></div>}
     </main>
   );
 }

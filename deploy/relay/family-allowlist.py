@@ -1,59 +1,44 @@
 #!/usr/bin/env python3
-"""Enroll invited devices and accept family gift-wraps from NIP-42-authenticated members."""
-import hashlib
-import hmac
+"""Authorize multi-family tenant-tagged gift-wraps from NIP-42-authenticated devices."""
 import json
 import os
 import sys
 
-LEGACY_KEYS = {
-    item.strip().lower()
-    for item in os.environ.get("FAMILY_PUBKEYS", "").split(",")
-    if item.strip()
-}
-INVITE_HASH = hashlib.sha256(os.environ.get("FAMILY_INVITE_CODE", "").strip().encode()).hexdigest()
-MEMBERS_PATH = os.environ.get("FAMILY_MEMBERS_PATH", "/app/strfry-db/family-members.json")
+REGISTRY_PATH = os.environ.get("FAMILY_REGISTRY_PATH", "/app/family-state/family-registry.json")
 
 
-def load_members():
+def load_spaces():
     try:
-        with open(MEMBERS_PATH, "r", encoding="utf-8") as member_file:
-            stored = json.load(member_file)
-        return {str(key).lower() for key in stored if isinstance(key, str)} | LEGACY_KEYS
+        with open(REGISTRY_PATH, "r", encoding="utf-8") as registry_file:
+            registry = json.load(registry_file)
+        spaces = registry.get("spaces", {})
+        if not isinstance(spaces, dict):
+            return {}
+        return {
+            str(family_id): {str(key).lower() for key in value.get("members", []) if isinstance(key, str)}
+            for family_id, value in spaces.items()
+            if isinstance(value, dict)
+        }
     except (OSError, json.JSONDecodeError, TypeError):
-        return set(LEGACY_KEYS)
+        return {}
 
 
-def save_member(pubkey):
-    members = load_members()
-    if pubkey in members:
-        return
-    members.add(pubkey)
-    temporary_path = f"{MEMBERS_PATH}.tmp"
-    with open(temporary_path, "w", encoding="utf-8") as member_file:
-        json.dump(sorted(members), member_file, separators=(",", ":"))
-    os.replace(temporary_path, MEMBERS_PATH)
+def tag_value(event, key):
+    return next((tag[1] for tag in event.get("tags", []) if len(tag) > 1 and tag[0] == key), "")
+
 
 for line in sys.stdin:
     try:
         request = json.loads(line)
         event = request["event"]
-        authenticated_key = request.get("authed", "").lower()
-        event_pubkey = event.get("pubkey", "").lower()
-        kind = event.get("kind")
-
-        if kind == 28934:
-            claim = next((tag[1] for tag in event.get("tags", []) if tag[:1] == ["claim"] and len(tag) > 1), "")
-            accepted = bool(authenticated_key and authenticated_key == event_pubkey and hmac.compare_digest(claim, INVITE_HASH))
-            if accepted:
-                save_member(authenticated_key)
-        else:
-            accepted = kind == 1059 and authenticated_key in load_members()
-
+        authed = request.get("authed", "").lower()
+        family_id = tag_value(event, "h")
+        recipient = tag_value(event, "p").lower()
+        members = load_spaces().get(family_id, set())
+        accepted = event.get("kind") == 1059 and bool(family_id) and authed in members and recipient in members
         response = {"id": event["id"], "action": "accept" if accepted else "reject"}
         if not accepted:
-            response["msg"] = "restricted: relay accepts authenticated enrolled family messages only"
+            response["msg"] = "restricted: this device or recipient is not authorized for that family space"
         print(json.dumps(response, separators=(",", ":")), flush=True)
-    except (KeyError, TypeError, OSError, json.JSONDecodeError):
-        # A malformed policy request is rejected without crashing the relay plugin.
+    except (KeyError, TypeError, json.JSONDecodeError):
         print(json.dumps({"id": "", "action": "reject", "msg": "restricted: invalid relay request"}), flush=True)

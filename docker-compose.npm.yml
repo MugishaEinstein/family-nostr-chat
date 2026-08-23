@@ -1,13 +1,24 @@
-# Deploy this file when Nginx Proxy Manager already terminates HTTPS on this Docker host.
-# Do not run docker-compose.yml at the same time: it contains a separate Caddy proxy.
+# Multi-family Family Chat behind an existing Nginx Proxy Manager instance.
+# NPM remains the only service publicly reachable on ports 80 and 443.
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: mysql://familychat:${DB_PASSWORD}@database:3306/familychat
+      FAMILY_REGISTRY_PATH: /app/family-state/family-registry.json
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - family_state:/app/family-state
     networks:
       - npm_proxy
+      - family_internal
 
   relay:
     build:
@@ -19,16 +30,40 @@ services:
     entrypoint: ["/bin/sh", "/app/start.sh"]
     volumes:
       - relay_data:/app/strfry-db
+      - family_state:/app/family-state:ro
       - ./deploy/relay/strfry.conf.template:/app/strfry.conf.template:ro
       - ./deploy/relay/family-allowlist.py:/app/family-allowlist.py:ro
       - ./deploy/relay/start.sh:/app/start.sh:ro
     networks:
       - npm_proxy
+      - family_internal
+
+  database:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: familychat
+      MARIADB_USER: familychat
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - family_database:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u familychat -p$${MARIADB_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - family_internal
 
 volumes:
   relay_data:
+  family_state:
+  family_database:
 
 networks:
   npm_proxy:
     external: true
     name: ${NPM_NETWORK}
+  family_internal:
+    driver: bridge

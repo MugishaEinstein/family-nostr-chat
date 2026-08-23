@@ -143,3 +143,7 @@ Family Chat uses a one-time private invite code rather than a manual server-side
 ### Invite Experience Amendment
 
 Before the fields, setup now presents a fully formed family-room preview—sealed group identity, presence cue, two message bubbles, and a lock banner. Primary copy speaks about joining a family room; relay and Nostr details remain in the form and marginalia where they support confidence without becoming the main story.
+
+### Multi-Family Onboarding Verification
+
+The self-service Family Space creation and invitation-join screens were checked at desktop and mobile sizes. The create/join choice remains visible before the fields, and the mobile reading order preserves the private-space promise, clear form labels, and a reachable primary action.

@@ -16,14 +16,14 @@ relay {
   auth {
     enabled = true
     serviceUrl = "__RELAY_URL__"
-    restrictedReadKinds = "1059,28934"
+    restrictedReadKinds = "1059"
     restrictReadToInvolvedPubkey = true
   }
 
   info {
-    name = "Family Chat private relay"
-    description = "Private relay for an enrolled family group."
-    contact = "Family administrator"
+    name = "Family Chat shared private relay"
+    description = "Shared relay with isolated, server-authorized family spaces."
+    contact = "Family Chat operator"
   }
 
   writePolicy {

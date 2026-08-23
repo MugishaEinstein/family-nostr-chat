@@ -4,6 +4,16 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: mysql://familychat:${DB_PASSWORD}@database:3306/familychat
+      FAMILY_REGISTRY_PATH: /app/family-state/family-registry.json
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - family_state:/app/family-state
     networks:
       - family_net
 
@@ -17,9 +27,28 @@ services:
     entrypoint: ["/bin/sh", "/app/start.sh"]
     volumes:
       - relay_data:/app/strfry-db
+      - family_state:/app/family-state:ro
       - ./deploy/relay/strfry.conf.template:/app/strfry.conf.template:ro
       - ./deploy/relay/family-allowlist.py:/app/family-allowlist.py:ro
       - ./deploy/relay/start.sh:/app/start.sh:ro
+    networks:
+      - family_net
+
+  database:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: familychat
+      MARIADB_USER: familychat
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - family_database:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u familychat -p$${MARIADB_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
     networks:
       - family_net
 
@@ -40,6 +69,8 @@ services:
 
 volumes:
   relay_data:
+  family_state:
+  family_database:
   caddy_data:
   caddy_config:
 

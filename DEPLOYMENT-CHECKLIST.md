@@ -1,15 +1,3 @@
-# Family Chat Deployment Checklist
+# Family Chat deployment checklist
 
-| Check | Expected result |
-| --- | --- |
-| DNS | Both `chat.nostr.africa` and `relay.chat.nostr.africa` resolve to `giant`. |
-| NPM network | `NPM_NETWORK=nginx-proxy-manager_default` in `.env`. |
-| Relay secret | `FAMILY_INVITE_CODE` is a long private value in `.env`. |
-| Compose | `docker compose -f docker-compose.npm.yml ps` shows `web` and `relay` running. |
-| NPM hosts | `web:80` and `relay:7777` use valid TLS; relay Websockets Support is enabled. |
-| First device | Creating a browser key with the invite code ends at **Private relay**. |
-| Second device | It joins with the same invite code and sends/receives a fresh test message. |
-| People directory | Every device lists every other participant before family messaging begins. |
-| Backup | The relay volume has a tested, dated archive. |
-
-Detailed instructions: **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**.
+The current checklist is contained in **[MULTI_FAMILY_SETUP.md](./MULTI_FAMILY_SETUP.md)**. Before inviting users, confirm that MariaDB, `web`, and `relay` are healthy; the Nginx Proxy Manager application host forwards to `web:3000`; the relay host forwards to `relay:7777` with WebSockets enabled; and two separate Family Spaces cannot exchange messages.

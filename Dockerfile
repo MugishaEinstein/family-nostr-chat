@@ -1,12 +1,16 @@
-# Family Chat deployment image: build the static private conversation client, then serve it with Caddy.
 FROM node:22-alpine AS build
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm build
+RUN corepack enable && pnpm install --frozen-lockfile && pnpm build
 
-FROM caddy:2.10-alpine
-COPY deploy/web/Caddyfile /etc/caddy/Caddyfile
-COPY --from=build /app/dist/public /srv
-EXPOSE 80
+FROM node:22-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/drizzle ./drizzle
+COPY --from=build /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=build /app/deploy/web/start.sh ./deploy/web/start.sh
+RUN chmod 0755 ./deploy/web/start.sh
+CMD ["./deploy/web/start.sh"]
