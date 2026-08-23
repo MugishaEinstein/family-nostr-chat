@@ -1,0 +1,34 @@
+# Deploy this file when Nginx Proxy Manager already terminates HTTPS on this Docker host.
+# Do not run docker-compose.yml at the same time: it contains a separate Caddy proxy.
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks:
+      - npm_proxy
+
+  relay:
+    build:
+      context: .
+      dockerfile: deploy/relay/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    entrypoint: ["/bin/sh", "/app/start.sh"]
+    volumes:
+      - relay_data:/app/strfry-db
+      - ./deploy/relay/strfry.conf.template:/app/strfry.conf.template:ro
+      - ./deploy/relay/family-allowlist.py:/app/family-allowlist.py:ro
+      - ./deploy/relay/start.sh:/app/start.sh:ro
+    networks:
+      - npm_proxy
+
+volumes:
+  relay_data:
+
+networks:
+  npm_proxy:
+    external: true
+    name: ${NPM_NETWORK}

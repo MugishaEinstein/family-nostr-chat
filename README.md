@@ -15,6 +15,8 @@ Hearthline is an installable, browser-based family conversation room that publis
 
 ## Ubuntu deployment
 
+If your Ubuntu server already uses Nginx Proxy Manager, follow **[NPM_DEPLOYMENT.md](./NPM_DEPLOYMENT.md)** and use `docker-compose.npm.yml` instead of the Caddy-based `docker-compose.yml`. The NPM deployment keeps both the web app and relay behind NPM’s HTTPS/WSS proxy and gives a complete account-enrollment sequence for a family organizer.
+
 Your server needs a domain (or two subdomains) that point to its public IP address. Use one host name for the web app, such as `chat.example.com`, and another for the relay, such as `relay.example.com`. Caddy obtains certificates only after DNS is correct and the server can receive traffic on ports 80 and 443.[6]
 
 | Requirement | Minimum |

@@ -285,8 +285,8 @@ export default function Home() {
 
   const copyPublicKey = async () => {
     if (!identity) return;
-    await navigator.clipboard.writeText(displayNpub(identity.pubkey));
-    toast.success("Your npub is ready to share with the family organizer.");
+    await navigator.clipboard.writeText(identity.pubkey);
+    toast.success("Your hexadecimal public key is ready for the family allowlist.");
   };
 
   const sendMessage = async () => {
@@ -567,7 +567,7 @@ export default function Home() {
         <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowSettings(false)}>
           <section className="hearth-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-5"><div><p className="eyebrow">This device</p><h2 id="settings-title" className="mt-2 font-['Fraunces'] text-3xl tracking-[-.04em]">Relay & identity</h2></div><button type="button" onClick={() => setShowSettings(false)} className="modal-close" aria-label="Close"><X className="h-4 w-4" /></button></div>
-            <div className="mt-6 rounded-2xl border border-[#E1D5C7] bg-[#FFFDF8] p-4"><div className="flex items-center gap-3"><span className="member-avatar member-avatar--self">{initials(selfMember?.name ?? "You")}</span><div className="min-w-0"><p className="font-['DM_Sans'] text-sm font-bold">{selfMember?.name}</p><p className="truncate font-mono text-[10px] text-[#81776E]">{displayNpub(identity.pubkey)}</p></div></div><Button variant="outline" onClick={() => void copyPublicKey()} className="mt-4 h-9 w-full rounded-xl border-[#D8C7B8] bg-transparent font-['DM_Sans'] text-xs text-[#7F4F44]"><Copy className="mr-2 h-3.5 w-3.5" />Copy public identity</Button></div>
+            <div className="mt-6 rounded-2xl border border-[#E1D5C7] bg-[#FFFDF8] p-4"><div className="flex items-center gap-3"><span className="member-avatar member-avatar--self">{initials(selfMember?.name ?? "You")}</span><div className="min-w-0"><p className="font-['DM_Sans'] text-sm font-bold">{selfMember?.name}</p><p className="truncate font-mono text-[10px] text-[#81776E]">{displayNpub(identity.pubkey)}</p></div></div><Button variant="outline" onClick={() => void copyPublicKey()} className="mt-4 h-9 w-full rounded-xl border-[#D8C7B8] bg-transparent font-['DM_Sans'] text-xs text-[#7F4F44]"><Copy className="mr-2 h-3.5 w-3.5" />Copy hex key for the allowlist</Button></div>
             <label className="field-label mt-6"><span>Family relay</span><Input value={settingsRelayUrl} onChange={(event) => setSettingsRelayUrl(event.target.value)} className="hearth-input mt-2" /></label>
             <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#F2E6D9] p-3 font-['DM_Sans'] text-xs leading-5 text-[#755C4E]"><CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />{connectionNote}</div>
             <Button onClick={() => void updateRelay()} className="hearth-primary mt-5 w-full"><Link2 className="mr-2 h-4 w-4" />Save and reconnect</Button>

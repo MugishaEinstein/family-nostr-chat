@@ -9,4 +9,4 @@ sed \
   -e "s|__FAMILY_PUBKEYS__|${FAMILY_PUBKEYS}|g" \
   /app/strfry.conf.template > /app/strfry.conf
 
-exec strfry relay
+exec strfry --config /app/strfry.conf relay
