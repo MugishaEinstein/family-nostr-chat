@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import {
   CheckCheck,
   CircleAlert,
-  Copy,
   ImagePlus,
   Info,
   KeyRound,
@@ -53,7 +52,6 @@ type MessengerWorkspaceProps = {
   onAddMember: (name: string, key: string) => void;
   onRemoveMember: (pubkey: string) => void;
   onUpdateRelay: () => void;
-  onCopyPublicKey: () => void;
   onForgetDevice: () => void;
 };
 
@@ -102,7 +100,6 @@ export default function MessengerWorkspace({
   onAddMember,
   onRemoveMember,
   onUpdateRelay,
-  onCopyPublicKey,
   onForgetDevice,
 }: MessengerWorkspaceProps) {
   const [showSidebar, setShowSidebar] = useState(false);
@@ -201,7 +198,7 @@ export default function MessengerWorkspace({
 
       {showPeople && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowPeople(false)}><section className="hearth-modal messenger-modal" role="dialog" aria-modal="true" aria-labelledby="people-title" onMouseDown={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-5"><div><p className="modal-kicker">Family room</p><h2 id="people-title">People</h2></div><button type="button" onClick={() => setShowPeople(false)} className="modal-close" aria-label="Close"><X className="h-4 w-4" /></button></div><p className="modal-copy">Add the public key of everyone who belongs in this family room. Each sender uses this list to seal a message for the right people.</p><div className="add-person-form"><Input value={memberName} onChange={(event) => setMemberName(event.target.value)} placeholder="Name, for example Jean" /><Input value={memberKey} onChange={(event) => setMemberKey(event.target.value)} placeholder="npub1… or hexadecimal key" className="font-mono text-xs" /><Button onClick={addMember} className="hearth-primary"><Plus className="mr-2 h-4 w-4" />Add person</Button></div><div className="people-modal-list">{visibleMembers.map((member) => <div key={member.pubkey} className="people-modal-row"><span className="person-avatar">{initials(member.name)}</span><span className="min-w-0 flex-1"><strong>{member.pubkey === identity.pubkey ? `${member.name} (You)` : member.name}</strong><small>{shortKey(member.pubkey, 10)}</small></span>{member.pubkey !== identity.pubkey && <button type="button" onClick={() => onRemoveMember(member.pubkey)} aria-label={`Remove ${member.name}`}><X className="h-4 w-4" /></button>}</div>)}</div></section></div>}
 
-      {showSettings && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowSettings(false)}><section className="hearth-modal messenger-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" onMouseDown={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-5"><div><p className="modal-kicker">This device</p><h2 id="settings-title">Privacy & relay</h2></div><button type="button" onClick={() => setShowSettings(false)} className="modal-close" aria-label="Close"><X className="h-4 w-4" /></button></div><div className="settings-identity"><span className="person-avatar person-avatar--self">{initials(visibleMembers.find((member) => member.pubkey === identity.pubkey)?.name ?? "You")}</span><div className="min-w-0 flex-1"><strong>{visibleMembers.find((member) => member.pubkey === identity.pubkey)?.name ?? "You"}</strong><small>{displayNpub(identity.pubkey)}</small></div></div><Button variant="outline" onClick={onCopyPublicKey} className="copy-key-button"><Copy className="mr-2 h-3.5 w-3.5" />Copy hex key for the allowlist</Button><label className="modal-label">Family relay<Input value={settingsRelayUrl} onChange={(event) => setSettingsRelayUrl(event.target.value)} /></label><div className="relay-status"><CircleAlert className="h-4 w-4" />{connectionNote || relayUrl}</div><Button onClick={onUpdateRelay} className="hearth-primary mt-5 w-full"><Link2 className="mr-2 h-4 w-4" />Save and reconnect</Button><button type="button" onClick={onForgetDevice} className="forget-link"><LogOut className="h-3.5 w-3.5" />Forget this device</button><p className="settings-footnote"><ShieldCheck className="h-3.5 w-3.5" />Your private key remains in this browser.</p></section></div>}
+      {showSettings && <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowSettings(false)}><section className="hearth-modal messenger-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" onMouseDown={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-5"><div><p className="modal-kicker">This device</p><h2 id="settings-title">Privacy & relay</h2></div><button type="button" onClick={() => setShowSettings(false)} className="modal-close" aria-label="Close"><X className="h-4 w-4" /></button></div><div className="settings-identity"><span className="person-avatar person-avatar--self">{initials(visibleMembers.find((member) => member.pubkey === identity.pubkey)?.name ?? "You")}</span><div className="min-w-0 flex-1"><strong>{visibleMembers.find((member) => member.pubkey === identity.pubkey)?.name ?? "You"}</strong><small>{displayNpub(identity.pubkey)}</small></div></div><div className="auto-enrollment-note"><ShieldCheck className="h-4 w-4" /><span>This device joined your family relay automatically with its invite code.</span></div><label className="modal-label">Family relay<Input value={settingsRelayUrl} onChange={(event) => setSettingsRelayUrl(event.target.value)} /></label><div className="relay-status"><CircleAlert className="h-4 w-4" />{connectionNote || relayUrl}</div><Button onClick={onUpdateRelay} className="hearth-primary mt-5 w-full"><Link2 className="mr-2 h-4 w-4" />Save and reconnect</Button><button type="button" onClick={onForgetDevice} className="forget-link"><LogOut className="h-3.5 w-3.5" />Forget this device</button><p className="settings-footnote"><ShieldCheck className="h-3.5 w-3.5" />Your private key remains in this browser.</p></section></div>}
     </main>
   );
 }

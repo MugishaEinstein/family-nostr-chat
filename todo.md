@@ -1,5 +1,7 @@
-# Family Chat Setup Guide
+# Invite-Code Enrollment
 
-- [x] Document the Ubuntu and Docker prerequisites.
-- [x] Provide the exact Nginx Proxy Manager host configuration for the confirmed domains and Docker network.
-- [x] Explain first-device creation, family enrollment, bidirectional message verification, and release updates.
+- [x] Confirm invite-code enrollment as the automatic family-access model.
+- [x] Add persistent invited-device membership handling to the relay policy.
+- [x] Add a one-time invite-code join experience to Family Chat.
+- [x] Replace manual hexadecimal allowlist setup instructions with invite-code setup and recovery guidance.
+- [ ] Validate a newly enrolled device can publish and receive protected family messages after deployment.

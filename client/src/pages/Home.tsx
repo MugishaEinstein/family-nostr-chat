@@ -35,6 +35,7 @@ import type { Subscription } from "nostr-tools/abstract-relay";
 import {
   buildRelay,
   displayNpub,
+  enrollWithInviteCode,
   FAMILY_SUBJECT,
   generateIdentity,
   getStoredIdentity,
@@ -113,6 +114,7 @@ export default function Home() {
   const [memberKey, setMemberKey] = useState("");
   const [setupName, setSetupName] = useState("");
   const [setupRelay, setSetupRelay] = useState("");
+  const [setupInviteCode, setSetupInviteCode] = useState("");
   const [importSecret, setImportSecret] = useState("");
   const [showImport, setShowImport] = useState(false);
   const relayRef = useRef<Relay | null>(null);
@@ -161,15 +163,15 @@ export default function Home() {
     setConnectionNote("Not connected");
   };
 
-  const connect = async (requestedRelay = relayUrl, requestedIdentity = identity) => {
-    if (!requestedIdentity) return;
+  const connect = async (requestedRelay = relayUrl, requestedIdentity = identity, inviteCode = "") => {
+    if (!requestedIdentity) return false;
     let normalizedRelay: string;
     try {
       normalizedRelay = normalizeRelayUrl(requestedRelay);
     } catch (error) {
       setConnection("error");
       setConnectionNote(error instanceof Error ? error.message : "Enter a valid relay address.");
-      return;
+      return false;
     }
     disconnect();
     setConnection("connecting");
@@ -186,6 +188,24 @@ export default function Home() {
       setRelayUrl(normalizedRelay);
       setSettingsRelayUrl(normalizedRelay);
       storeRelay(normalizedRelay);
+      if (inviteCode.trim()) {
+        setConnectionNote("Joining your private family relay…");
+        await new Promise<void>((resolve) => {
+          let settled = false;
+          let primer: Subscription | null = null;
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            primer?.close();
+            resolve();
+          };
+          primer = relay.subscribe([{ kinds: [1059], "#p": [requestedIdentity.pubkey], limit: 1 }], {
+            onclose: () => window.setTimeout(finish, 950),
+          });
+          window.setTimeout(finish, 2200);
+        });
+        await enrollWithInviteCode(relay, requestedIdentity, inviteCode);
+      }
       setConnection("connected");
       setConnectionNote("Private relay connected");
       const subscribeToFamilyRoom = () => {
@@ -219,9 +239,11 @@ export default function Home() {
       };
       authRetryCountRef.current = 0;
       subscribeToFamilyRoom();
+      return true;
     } catch (error) {
       setConnection("error");
       setConnectionNote(error instanceof Error ? error.message : "Unable to reach the relay.");
+      return false;
     }
   };
 
@@ -246,6 +268,8 @@ export default function Home() {
         name: setupName.trim() || "You",
         pubkey: nextIdentity.pubkey,
       };
+      const joined = await connect(normalizedRelay, nextIdentity, setupInviteCode);
+      if (!joined) throw new Error("We could not join that family relay. Check the invite code and try again.");
       storeIdentity(nextIdentity);
       storeMembers([me]);
       storeRelay(normalizedRelay);
@@ -253,7 +277,6 @@ export default function Home() {
       setMembers([me]);
       setRelayUrl(normalizedRelay);
       setSettingsRelayUrl(normalizedRelay);
-      await connect(normalizedRelay, nextIdentity);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Complete the relay address to continue.");
     }
@@ -268,6 +291,8 @@ export default function Home() {
         name: setupName.trim() || "You",
         pubkey: nextIdentity.pubkey,
       };
+      const joined = await connect(normalizedRelay, nextIdentity, setupInviteCode);
+      if (!joined) throw new Error("We could not join that family relay. Check the invite code and try again.");
       storeIdentity(nextIdentity);
       storeMembers([me]);
       storeRelay(normalizedRelay);
@@ -276,7 +301,6 @@ export default function Home() {
       setRelayUrl(normalizedRelay);
       setSettingsRelayUrl(normalizedRelay);
       setImportSecret("");
-      await connect(normalizedRelay, nextIdentity);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to import that key.");
     }
@@ -309,12 +333,6 @@ export default function Home() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Check the relay address.");
     }
-  };
-
-  const copyPublicKey = async () => {
-    if (!identity) return;
-    await navigator.clipboard.writeText(identity.pubkey);
-    toast.success("Your hexadecimal public key is ready for the family allowlist.");
   };
 
   const sendMessage = async () => {
@@ -369,7 +387,7 @@ export default function Home() {
             <div className="relative max-w-xl py-10 lg:pb-20">
               <p className="mb-5 font-['DM_Sans'] text-xs font-bold tracking-[0.18em] text-[#E3AA78] uppercase">A private family messenger</p>
               <h1 className="font-['Fraunces'] text-5xl leading-[.97] tracking-[-0.045em] sm:text-6xl lg:text-7xl">A room for the people you keep close.</h1>
-              <p className="mt-7 max-w-md font-['DM_Sans'] text-base leading-7 text-[#E7DDD0]">Family Chat sends signed, encrypted Nostr messages through the relay your family runs.</p>
+              <p className="mt-7 max-w-md font-['DM_Sans'] text-base leading-7 text-[#E7DDD0]">A quiet room for your family, with every conversation kept close.</p>
             </div>
             <div className="relative flex items-center gap-3 border-l-2 border-[#D98C75] pl-3 font-['DM_Sans'] text-xs text-[#E7D4C1]">
               <ShieldCheck className="h-4 w-4 shrink-0 text-[#F1B185]" />
@@ -383,8 +401,8 @@ export default function Home() {
               <div className="mb-10">
                 <p className="eyebrow">Bring your key, or make one</p>
                 <h2 className="mt-3 font-['Fraunces'] text-4xl tracking-[-0.04em] text-[#302C28]">Open the family room</h2>
-                <p className="mt-3 font-['DM_Sans'] text-sm leading-6 text-[#726A61]">Start by naming this device and adding the secure relay address from your deployment.</p>
-                <div className="setup-messenger-hint"><span className="setup-hint-orbit"><img src={sealUrl} alt="" /></span><span className="flex-1"><strong>Family chat, kept close</strong><small><LockKeyhole className="h-3 w-3" />Your conversation begins encrypted</small></span><ArrowUp className="h-4 w-4" /></div>
+                <p className="mt-3 font-['DM_Sans'] text-sm leading-6 text-[#726A61]">Your family room is one small step away.</p>
+                <div className="setup-room-preview"><div className="setup-room-preview-head"><span className="setup-hint-orbit"><img src={sealUrl} alt="" /></span><span className="flex-1"><strong>Family room</strong><small><LockKeyhole className="h-3 w-3" />Private chat</small></span><span className="preview-presence" /></div><div className="preview-message preview-message--other"><span>Someone’s home already feels closer.</span></div><div className="preview-message preview-message--self"><span>Welcome to Family Chat</span></div><div className="preview-lock"><LockKeyhole className="h-3 w-3" />Sealed for your family</div></div>
               </div>
 
               <div className="ledger-form space-y-5">
@@ -395,8 +413,13 @@ export default function Home() {
                 </label>
                 <div className="ledger-section-label pt-1"><span>02</span><p>The household relay</p></div>
                 <label className="field-label">
-                  <span>Family relay address</span>
+                  <span>Your family’s private link</span>
                   <Input value={setupRelay} onChange={(event) => setSetupRelay(event.target.value)} placeholder="wss://relay.example.com" className="hearth-input mt-2" />
+                </label>
+                <div className="ledger-section-label pt-1"><span>03</span><p>Your family invite</p></div>
+                <label className="field-label">
+                  <span>Family invite code</span>
+                  <Input value={setupInviteCode} onChange={(event) => setSetupInviteCode(event.target.value)} placeholder="Enter the code shared by your family" className="hearth-input mt-2" type="password" autoComplete="off" />
                 </label>
               </div>
 
@@ -418,7 +441,7 @@ export default function Home() {
               <div className="trust-marginalia mt-8">
                 <div><ShieldCheck className="h-4 w-4" /><p><strong>Your key stays here.</strong> It signs and opens messages on this device.</p></div>
                 <div><Radio className="h-4 w-4" /><p><strong>The relay is family-run.</strong> It carries sealed correspondence, not a social feed.</p></div>
-                <div><UsersRound className="h-4 w-4" /><p><strong>Joining is deliberate.</strong> The organizer adds your public identity before you enter.</p></div>
+                <div><UsersRound className="h-4 w-4" /><p><strong>Joining is simple.</strong> Enter your family invite once; this device is enrolled automatically.</p></div>
               </div>
             </div>
           </div>
@@ -446,7 +469,6 @@ export default function Home() {
       onAddMember={(name, key) => addMember(name, key)}
       onRemoveMember={removeMember}
       onUpdateRelay={() => void updateRelay()}
-      onCopyPublicKey={() => void copyPublicKey()}
       onForgetDevice={forgetDevice}
     />
   );
@@ -533,7 +555,7 @@ export default function Home() {
                   <div className="relative max-w-sm px-7 py-8 sm:px-10 sm:py-10">
                     <p className="eyebrow text-[#AA6152]">A fresh page</p>
                     <h2 className="mt-3 font-['Fraunces'] text-3xl tracking-[-.035em] text-[#3A332D]">The room is waiting for its first note.</h2>
-                    <p className="mt-3 font-['DM_Sans'] text-sm leading-6 text-[#655B51]">Once each person has been added to the relay allowlist and this room, messages arrive here as signed, encrypted correspondence.</p>
+                    <p className="mt-3 font-['DM_Sans'] text-sm leading-6 text-[#655B51]">Once each person has joined with the family invite and been added to this room, messages arrive here as signed, encrypted correspondence.</p>
                   </div>
                 </div>
               ) : (
@@ -608,7 +630,7 @@ export default function Home() {
         <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowMembers(false)}>
           <section className="hearth-modal" role="dialog" aria-modal="true" aria-labelledby="members-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-5"><div><p className="eyebrow">Family directory</p><h2 id="members-title" className="mt-2 font-['Fraunces'] text-3xl tracking-[-.04em]">Set the table</h2></div><button type="button" onClick={() => setShowMembers(false)} className="modal-close" aria-label="Close"><X className="h-4 w-4" /></button></div>
-            <p className="mt-3 font-['DM_Sans'] text-sm leading-6 text-[#746A61]">Add the public key (npub or hex) for everyone who belongs in this room. The relay administrator must add the same key to the deployment allowlist.</p>
+            <p className="mt-3 font-['DM_Sans'] text-sm leading-6 text-[#746A61]">Add the public key (npub or hex) for everyone who belongs in this room. Their device joins the relay automatically with the family invite.</p>
             <div className="mt-6 space-y-4"><label className="field-label"><span>Name</span><Input value={memberName} onChange={(event) => setMemberName(event.target.value)} placeholder="For example, Theo" className="hearth-input mt-2" /></label><label className="field-label"><span>Public key or npub</span><Input value={memberKey} onChange={(event) => setMemberKey(event.target.value)} placeholder="npub1…" className="hearth-input mt-2 font-mono text-xs" /></label><Button onClick={addMember} className="hearth-primary w-full"><Plus className="mr-2 h-4 w-4" />Add to this device</Button></div>
             <div className="mt-7 border-t border-[#E0D5C7] pt-4"><p className="eyebrow mb-3">In this room</p><div className="max-h-40 space-y-2 overflow-y-auto pr-1">{visibleMembers.map((member) => <div key={member.pubkey} className="flex items-center gap-3 rounded-xl bg-[#F8F2E9] px-3 py-2.5"><span className="member-avatar">{initials(member.name)}</span><span className="min-w-0 flex-1 truncate font-['DM_Sans'] text-sm font-semibold">{member.name}</span>{member.pubkey !== identity.pubkey && <button type="button" onClick={() => removeMember(member.pubkey)} className="text-[#A83D32]" aria-label={`Remove ${member.name}`}><X className="h-4 w-4" /></button>}</div>)}</div></div>
           </section>
@@ -619,7 +641,7 @@ export default function Home() {
         <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowSettings(false)}>
           <section className="hearth-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-5"><div><p className="eyebrow">This device</p><h2 id="settings-title" className="mt-2 font-['Fraunces'] text-3xl tracking-[-.04em]">Relay & identity</h2></div><button type="button" onClick={() => setShowSettings(false)} className="modal-close" aria-label="Close"><X className="h-4 w-4" /></button></div>
-            <div className="mt-6 rounded-2xl border border-[#E1D5C7] bg-[#FFFDF8] p-4"><div className="flex items-center gap-3"><span className="member-avatar member-avatar--self">{initials(selfMember?.name ?? "You")}</span><div className="min-w-0"><p className="font-['DM_Sans'] text-sm font-bold">{selfMember?.name}</p><p className="truncate font-mono text-[10px] text-[#81776E]">{displayNpub(identity.pubkey)}</p></div></div><Button variant="outline" onClick={() => void copyPublicKey()} className="mt-4 h-9 w-full rounded-xl border-[#D8C7B8] bg-transparent font-['DM_Sans'] text-xs text-[#7F4F44]"><Copy className="mr-2 h-3.5 w-3.5" />Copy hex key for the allowlist</Button></div>
+            <div className="mt-6 rounded-2xl border border-[#E1D5C7] bg-[#FFFDF8] p-4"><div className="flex items-center gap-3"><span className="member-avatar member-avatar--self">{initials(selfMember?.name ?? "You")}</span><div className="min-w-0"><p className="font-['DM_Sans'] text-sm font-bold">{selfMember?.name}</p><p className="truncate font-mono text-[10px] text-[#81776E]">{displayNpub(identity.pubkey)}</p></div></div><p className="mt-4 font-['DM_Sans'] text-xs leading-5 text-[#7F4F44]">This device joined the family relay automatically with its invite code.</p></div>
             <label className="field-label mt-6"><span>Family relay</span><Input value={settingsRelayUrl} onChange={(event) => setSettingsRelayUrl(event.target.value)} className="hearth-input mt-2" /></label>
             <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#F2E6D9] p-3 font-['DM_Sans'] text-xs leading-5 text-[#755C4E]"><CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />{connectionNote}</div>
             <Button onClick={() => void updateRelay()} className="hearth-primary mt-5 w-full"><Link2 className="mr-2 h-4 w-4" />Save and reconnect</Button>

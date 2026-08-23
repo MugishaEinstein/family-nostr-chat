@@ -30,6 +30,11 @@ function nowSeconds() {
   return Math.floor(Date.now() / 1000);
 }
 
+async function sha256Hex(value: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return utils.bytesToHex(new Uint8Array(digest));
+}
+
 export function normalizeRelayUrl(value: string) {
   const trimmed = value.trim().replace(/\/$/, "");
   if (!/^wss:\/\//i.test(trimmed) && !/^ws:\/\//i.test(trimmed)) {
@@ -121,6 +126,42 @@ export function buildRelay(relayUrl: string, identity: LocalIdentity) {
   relay.onauth = async (template) =>
     finalizeEvent(template, utils.hexToBytes(identity.secretHex));
   return relay;
+}
+
+export async function enrollWithInviteCode(relay: Relay, identity: LocalIdentity, inviteCode: string) {
+  const normalizedCode = inviteCode.trim();
+  if (!normalizedCode) throw new Error("Enter the family invite code to join this relay.");
+  if (!globalThis.crypto?.subtle) throw new Error("This browser cannot securely prepare the family invite code.");
+
+  const claim = await sha256Hex(normalizedCode);
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const joinRequest = finalizeEvent(
+      {
+        kind: 28934,
+        content: "",
+        created_at: nowSeconds(),
+        tags: [["-"], ["claim", claim]],
+      },
+      utils.hexToBytes(identity.secretHex),
+    );
+
+    try {
+      await relay.publish(joinRequest);
+      return;
+    } catch (error) {
+      lastError = error;
+      const reason = error instanceof Error ? error.message : "";
+      const authenticationStillSettling = reason.startsWith("auth-required:") || reason.startsWith("restricted:");
+      if (!authenticationStillSettling || attempt === 3) break;
+      await new Promise((resolve) => window.setTimeout(resolve, 900));
+    }
+  }
+
+  const reason = lastError instanceof Error ? lastError.message : "Unable to join the family relay.";
+  if (reason.startsWith("restricted:")) throw new Error("That family invite code is not valid for this relay.");
+  throw new Error(reason);
 }
 
 export async function publishFamilyMessage(

@@ -135,3 +135,11 @@ The sealed doorway stays the distinctive visual anchor, now used as a compact gr
 ### Setup-to-Messenger Bridge
 
 Setup retains its more ceremonial ledger composition, but now introduces the sealed group-avatar, encrypted-chat promise, and a concise messenger entry preview before account creation. **Family Chat** is the public product name; “Private family messenger” is the single supporting descriptor throughout the journey.
+
+### Enrollment Decision
+
+Family Chat uses a one-time private invite code rather than a manual server-side public-key form. The invite-code field is a clear third setup step; after successful NIP-42 authentication, the relay remembers the device key and the settings panel confirms automatic enrollment without exposing operational server details.
+
+### Invite Experience Amendment
+
+Before the fields, setup now presents a fully formed family-room preview—sealed group identity, presence cue, two message bubbles, and a lock banner. Primary copy speaks about joining a family room; relay and Nostr details remain in the form and marginalia where they support confidence without becoming the main story.

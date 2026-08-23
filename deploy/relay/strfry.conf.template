@@ -16,7 +16,7 @@ relay {
   auth {
     enabled = true
     serviceUrl = "__RELAY_URL__"
-    restrictedReadKinds = "1059"
+    restrictedReadKinds = "1059,28934"
     restrictReadToInvolvedPubkey = true
   }
 

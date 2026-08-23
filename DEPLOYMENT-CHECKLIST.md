@@ -1,26 +1,15 @@
-# Deployment Checklist
+# Family Chat Deployment Checklist
 
-## Before starting
-
-| Item | Confirm |
+| Check | Expected result |
 | --- | --- |
-| DNS | `APP_DOMAIN` and `RELAY_DOMAIN` resolve to the Ubuntu server’s public IP. |
-| Firewall | Only ports 22 (as appropriate), 80, and 443 are open. Port 7777 is not exposed. |
-| Docker | `docker --version` and `docker compose version` both work. |
-| Allowlist | `.env` has the first administrator’s 64-character hexadecimal pubkey in `FAMILY_PUBKEYS`. |
-| Backups | A backup location is available for the `relay_data` volume. |
+| DNS | Both `chat.nostr.africa` and `relay.chat.nostr.africa` resolve to `giant`. |
+| NPM network | `NPM_NETWORK=nginx-proxy-manager_default` in `.env`. |
+| Relay secret | `FAMILY_INVITE_CODE` is a long private value in `.env`. |
+| Compose | `docker compose -f docker-compose.npm.yml ps` shows `web` and `relay` running. |
+| NPM hosts | `web:80` and `relay:7777` use valid TLS; relay Websockets Support is enabled. |
+| First device | Creating a browser key with the invite code ends at **Private relay**. |
+| Second device | It joins with the same invite code and sends/receives a fresh test message. |
+| People directory | Every device lists every other participant before family messaging begins. |
+| Backup | The relay volume has a tested, dated archive. |
 
-## First validation
-
-Start with `docker compose up -d --build`, then inspect `docker compose ps`. Open the chat host over HTTPS, create an identity, and set its relay value to `wss://RELAY_DOMAIN`. The status pill should read **Relay live**. Add a second allowlisted test key in another browser profile to exchange a message.
-
-## Enrollment rule
-
-Every person must be added in two places: their public key is added to `FAMILY_PUBKEYS` on the server, and the same public key is added in every relevant browser’s **Set the table** directory. Restart the relay after modifying `.env`.
-
-> NIP-17 allows multi-person rooms, but each message is separately encrypted for every receiver; it is well suited to a small family rather than a large group.[1]
-
-## References
-
-[1]: https://nips.nostr.com/17 "NIP-17: Private Direct Messages"
-
+Detailed instructions: **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**.
