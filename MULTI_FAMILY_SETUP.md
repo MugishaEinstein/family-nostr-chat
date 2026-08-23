@@ -42,7 +42,7 @@ DB_PASSWORD=<first-generated-value>
 DB_ROOT_PASSWORD=<second-generated-value>
 ```
 
-Build and start the application, relay, and local database. The web container applies its checked-in database migration after MariaDB reports healthy.
+Build and start the application, relay, and local database. In this self-hosted Compose stack, the web container applies its checked-in database migration after MariaDB reports healthy. Managed Family Chat hosting uses its project database migration separately and does not run container-start migrations.
 
 ```bash
 docker compose -f docker-compose.npm.yml up -d --build

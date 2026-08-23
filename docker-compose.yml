@@ -7,6 +7,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      RUN_MIGRATIONS: "true"
       DATABASE_URL: mysql://familychat:${DB_PASSWORD}@database:3306/familychat
       FAMILY_REGISTRY_PATH: /app/family-state/family-registry.json
     depends_on:
